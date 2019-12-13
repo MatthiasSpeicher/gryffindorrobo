@@ -17,12 +17,14 @@ security prices}
 security prices}
 }
 \value{
-A \code{data frame} with the evolution of the portfolio.
+A \code{list} with the evolution of the portfolio as \code{data frame}
+and the amount of equity as \code{numeric}.
 }
 \description{
 The goal of risk parity PFs is to find PF weights, such that the
 risk contribution of each constutuent is the same for all PF constituents.
 }
 \examples{
-riskparitypf(equity = EuStockMarkets[, 1], debt = EuStockMarkets[, 2], commodity = EuStockMarkets[, 3])
+riskparitypf(equity = EuStockMarkets[, 1], debt = EuStockMarkets[, 2],
+commodity = EuStockMarkets[, 3])
 }

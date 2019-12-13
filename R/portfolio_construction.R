@@ -172,9 +172,11 @@ indexpf <- function(data) {
 #' security prices
 #' @param commodity A \code{data frame} or \code{matrix} with a time series of
 #' security prices
-#' @return A \code{data frame} with the evolution of the portfolio.
+#' @return A \code{list} with the evolution of the portfolio as \code{data frame}
+#' and the amount of equity as \code{numeric}.
 #' @export
-#' @examples riskparitypf(equity = EuStockMarkets[, 1], debt = EuStockMarkets[, 2], commodity = EuStockMarkets[, 3])
+#' @examples riskparitypf(equity = EuStockMarkets[, 1], debt = EuStockMarkets[, 2],
+#' commodity = EuStockMarkets[, 3])
 riskparitypf <- function(equity, debt, commodity) {
 
     data <- as.matrix(cbind(equity, debt, commodity))
@@ -209,7 +211,8 @@ riskparitypf <- function(equity, debt, commodity) {
                       returns[r, 2] * optweights[2, 1] +
                       returns[r, 3] * optweights[3, 1]))
     }
-    return(portfolio)
+    liste <- list(portfolio,as.numeric(optweights[1, 1]))
+    return(liste)
 ##### end of Risk parity function ##############################################
 }
 
