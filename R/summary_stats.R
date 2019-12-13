@@ -82,6 +82,7 @@ yearlystd <- function(backtest){
 #' @param par A \code{matrix} containing the weights of the PF constituents.
 #' All weights, except for one, have to be provided, as the last one is choosen,
 #' such that the weights sum up to 100 percent.
+#' @return \code{Numeric vector} conraining the Sharpe ratio.
 #' @export
 #' @examples
 #' sharpe(expectedreturn = matrix(c(1, 2)),

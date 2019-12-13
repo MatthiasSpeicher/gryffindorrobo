@@ -16,6 +16,9 @@ constituents, with their variance on the main diagonale}
 All weights, except for one, have to be provided, as the last one is choosen,
 such that the weights sum up to 100 percent.}
 }
+\value{
+\code{Numeric vector} conraining the Sharpe ratio.
+}
 \description{
 The function gives the Sharpe ratio of a PF, given its
 constituents' expected returns, its covariances and weights.
