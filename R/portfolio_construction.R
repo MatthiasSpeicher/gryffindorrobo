@@ -200,7 +200,7 @@ riskparitypf <- function(equity, debt, commodity) {
 
     optweights <- as.matrix(optweights$par)
     optweights <- rbind(optweights, 1 - sum(optweights))
-
+    riskparityequity <<- as.numeric(optweights[1, 1])
     portfolio <- data.frame(100)
 
     for (r in 1:nrow(returns)) {
