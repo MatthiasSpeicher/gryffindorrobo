@@ -1,0 +1,368 @@
+---
+title: "Portfolio Summary"
+author: "Gryffindor"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Risk Classification
+
+The risk simulation is based on research on the benefit of repeated sampling in understanding risk conducted by the University of Mannheim. See <http://simulator.behavioral-finance.de/#!/> for further information. The portfolio is constructed according to the risk assessment conducted in the beginning of the App, where each risk class corresponds to a yearly standard deviation as a proxy for risk.
+
+
+## Investment Universe
+
+The portfolio has been constructed in accordance with the country and industry preferences specified. Geographically, your portfolio includes securities listed in the following countries: `r input$mymap_groups`. 
+```{r echo=FALSE, results='asis'}
+if (is.null(input$industry1)) {
+        cat("In terms of industries, you did not specify any restrictions, 
+            i.e. all industries are used in the portfolio construction.")
+    } else {
+        cat("The industries that have been chosen to exclude are:", input$industry1, sep = ", ")
+}
+```
+
+
+## Your Performance
+
+```{r echo = FALSE, results = "hide", fig.align='center', out.width= "65%"}
+if (input$rpref2 == 1 && input$inv_horizon <= 5) {
+
+        portfoliofinal <<- indexpf(as.data.frame(shortbond))
+
+        portfolioplot <- cbind(ovr$Date,portfoliofinal)
+        names(portfolioplot) <- c("Date","Portfolio")
+        portfolioplot$Date <- strptime(as.character(portfolioplot$Date), "%d/%m/%Y")
+        portfolioplot$Date <- as.Date(format(portfolioplot$Date, "%Y-%m-%d"))
+        portfolioplot <- cbind(portfolioplot, benchmark)
+        
+        plotfinal <- ggplot()+
+          geom_line(data = portfolioplot, aes(
+            Date, Portfolio, group = 1, colour = "Your Portfolio"), size = 1) +
+          geom_line(data = portfolioplot, aes(
+            Date, benchmark, group = 1, colour = "MSCI World Benchmark"), size =1) +
+          labs(x = "Year", y = "Portfoliodevelopement",
+               title = "Short Bond Portfolio") +
+          scale_x_date(date_breaks = "2 years")+
+          scale_colour_manual("", values = c("Your Portfolio"="blue", 
+                                           "MSCI World Benchmark"="grey"))+
+          theme(legend.position=c(.9,.1))
+          theme_minimal()
+      }
+
+##### long bond only ###########################################################
+
+      if ((input$rpref2 == 2 && input$inv_horizon <= 5) ||
+          (input$rpref2 == 1 && input$inv_horizon > 5 &&
+           input$inv_horizon <= 10)) {
+
+        portfoliofinal <<- indexpf(as.data.frame(longbond))
+        equityinvestment <<- 0
+
+        portfolioplot <- cbind(ovr$Date,portfoliofinal)
+        names(portfolioplot) <- c("Date","Portfolio")
+        portfolioplot$Date <- strptime(as.character(portfolioplot$Date), "%d/%m/%Y")
+        portfolioplot$Date <- as.Date(format(portfolioplot$Date, "%Y-%m-%d"))
+        portfolioplot <- cbind(portfolioplot, benchmark)
+        
+        plotfinal <- ggplot()+
+          geom_line(data = portfolioplot, aes(
+            Date, Portfolio, group = 1, colour = "Your Portfolio"), size = 1) +
+          geom_line(data = portfolioplot, aes(
+            Date, benchmark, group = 1, colour = "MSCI World Benchmark"), size =1) +
+          labs(x = "Year", y = "Portfoliodevelopement",
+               title = "Long Bond Portfolio") +
+          scale_x_date(date_breaks = "2 years")+
+          scale_colour_manual("", values = c("Your Portfolio"="blue", 
+                                             "MSCI World Benchmark"="grey")) +
+          theme(legend.position=c(.9,.1))
+          theme_minimal()
+      }
+
+
+
+##### minimum variance PF ######################################################
+
+      if ((input$rpref2 == 3 && input$inv_horizon <= 5) ||
+         #redundant but included so that the number of conitions = number of PFs
+          (input$rpref2 == 3 && input$inv_horizon > 5 &&
+           input$inv_horizon <= 10) ||
+          (input$rpref2 == 2 && input$inv_horizon > 10)) {
+
+####### split the required input df into sub-df's to make them optimizable #####
+        finaldata <- datasplit(newData())
+        portfoliofinal <<- minvarpf(finaldata)
+        equityinvestment <<- 0
+
+####### include the performance plot in Shiny ##################################
+        portfolioplot <- cbind(ovr$Date,portfoliofinal)
+        names(portfolioplot) <- c("Date","Portfolio")
+        portfolioplot$Date <- strptime(as.character(portfolioplot$Date), "%d/%m/%Y")
+        portfolioplot$Date <- as.Date(format(portfolioplot$Date, "%Y-%m-%d"))
+        portfolioplot <- cbind(portfolioplot, benchmark)
+
+        plotfinal <- ggplot()+
+          geom_line(data = portfolioplot, aes(
+            Date, Portfolio, group = 1, colour = "Your Portfolio"), size = 1) +
+          geom_line(data = portfolioplot, aes(
+            Date, benchmark, group = 1, colour = "MSCI World Benchmark"), size =1) +
+          labs(x = "Year", y = "Portfoliodevelopement",
+               title = "Minimum Variance Portfolio") +
+          scale_x_date(date_breaks = "2 years")+
+          scale_colour_manual("", values = c("Your Portfolio"="blue", 
+                                             "MSCI World Benchmark"="grey")) +
+          theme(legend.position=c(.9,.1))
+        theme_minimal()
+
+        }
+
+###### Equity + longbond overweight bond #######################################
+
+      if (input$rpref2 == 1 && input$inv_horizon > 10) {
+
+        finaldata <- datasplit(newData())
+
+        finalpf <- optimpf(finaldata)
+
+        longbondindexed <- indexpf(as.data.frame(longbond))
+        portfoliofinal <<- equityanddebtpf(finalpf, longbondindexed, 0.2)
+        
+        
+        portfolioplot <- cbind(ovr$Date,portfoliofinal)
+        names(portfolioplot) <- c("Date","Portfolio")
+        portfolioplot$Date <- strptime(as.character(portfolioplot$Date), "%d/%m/%Y")
+        portfolioplot <- cbind(portfolioplot, benchmark)
+        
+        plotfinal <- ggplot()+
+          geom_line(data = portfolioplot, aes(
+            Date, Portfolio, group = 1, colour = "Your Portfolio"), size = 1) +
+          geom_line(data = portfolioplot, aes(
+            Date, benchmark, group = 1, colour = "MSCI World Benchmark"), size =1) +
+          labs(x = "Year", y = "Portfoliodevelopement",
+               title = "Sharpe Ratio optimized Equity Portfolio with 80% Longterm Debt") +
+          scale_x_date(date_breaks = "2 years")+
+          scale_colour_manual("", values = c("Your Portfolio"="blue", 
+                                             "MSCI World Benchmark"="grey")) +
+          theme(legend.position=c(.9,.1))
+          theme_minimal()
+
+        equityinvestment <<- 0.2
+      }
+
+############################ risk parity #######################################
+      if ((input$rpref2 == 4 && input$inv_horizon <= 5) ||
+         (input$rpref2 == 5 && input$inv_horizon <= 5) ||
+         (input$rpref2 == 4 && input$inv_horizon > 5 && input$inv_horizon <= 10) ||
+         (input$rpref2 == 5 && input$inv_horizon > 5 && input$inv_horizon <= 10) ||
+         (input$rpref2 == 3 && input$inv_horizon > 10) ||
+         (input$rpref2 == 4 && input$inv_horizon > 10)) {
+
+        finaldata <- datasplit(newData())
+
+        finalpf <- optimpf(finaldata)
+
+        longbonddf <- as.data.frame(longbond)
+        commoditydf <- as.data.frame(commodities)
+
+        portfoliofinal <<- riskparitypf(finalpf, longbonddf, commoditydf)
+        equityinvestment <<- as.numeric(portfoliofinal[2])
+        portfoliofinal <<- as.data.frame(portfoliofinal[1])
+
+        portfolioplot <- cbind(ovr$Date, portfoliofinal)
+        names(portfolioplot) <- c("Date","Portfolio")
+        portfolioplot$Date <- strptime(as.character(portfolioplot$Date), "%d/%m/%Y")
+        portfolioplot$Date <- as.Date(format(portfolioplot$Date, "%Y-%m-%d"))
+        portfolioplot <- cbind(portfolioplot, benchmark)
+        
+        plotfinal <- ggplot()+
+          geom_line(data = portfolioplot, aes(
+            Date, Portfolio, group = 1, colour = "Your Portfolio"), size = 1) +
+          geom_line(data = portfolioplot, aes(
+            Date, benchmark, group = 1, colour = "MSCI World Benchmark"), size =1) +
+          labs(x = "Year", y = "Portfoliodevelopement",
+               title = "Risk Parity Portfolio with Sharpe Ratio optimized Equity Part") +
+          scale_x_date(date_breaks = "2 years")+
+          scale_colour_manual("", values = c("Your Portfolio"="blue", 
+                                             "MSCI World Benchmark"="grey")) +
+          theme(legend.position=c(.9,.1))
+          theme_minimal()
+
+      }
+
+########################### equity + longbond overweight equity ################
+      if ((input$rpref2 == 6 && input$inv_horizon <= 5) ||
+         (input$rpref2 == 6 && input$inv_horizon > 5 && input$inv_horizon <= 10) ||
+         (input$rpref2 == 5 && input$inv_horizon > 10)) {
+
+        finaldata <- datasplit(newData())
+
+        finalpf <- optimpf(finaldata)
+
+        longbondindexed <- indexpf(as.data.frame(longbond))
+        portfoliofinal <<- equityanddebtpf(finalpf, longbondindexed, 0.8)
+        equityinvestment <<- 0.8
+
+        portfolioplot <- cbind(ovr$Date,portfoliofinal)
+        names(portfolioplot) <- c("Date","Portfolio")
+        portfolioplot$Date <- strptime(as.character(portfolioplot$Date), "%d/%m/%Y")
+        portfolioplot$Date <- as.Date(format(portfolioplot$Date, "%Y-%m-%d"))
+        portfolioplot <- cbind(portfolioplot, benchmark)
+        
+        plotfinal <- ggplot()+
+          geom_line(data = portfolioplot, aes(
+            Date, Portfolio, group = 1, colour = "Your Portfolio"), size = 1) +
+          geom_line(data = portfolioplot, aes(
+            Date, benchmark, group = 1, colour = "MSCI World Benchmark"), size =1) +
+          labs(x = "Year", y = "Portfoliodevelopement",
+               title = "Sharpe Ratio optimized Equity Portfolio with 20% Longterm Debt") +
+          scale_x_date(date_breaks = "2 years")+
+          scale_colour_manual("", values = c("Your Portfolio"="blue", 
+                                             "MSCI World Benchmark"="grey")) +
+          theme(legend.position=c(.9,.1))
+          theme_minimal()
+
+      }
+
+################################ Pure Equity? ##################################
+      if ((input$rpref2 == 6 && input$inv_horizon > 10) ||
+          (input$rpref2 == 7 && input$inv_horizon <= 5) ||
+          (input$rpref2 == 7 && input$inv_horizon > 5 && input$inv_horizon <= 10) ||
+          (input$rpref2 == 7 && input$inv_horizon > 10)) {
+
+        finaldata <- datasplit(newData())
+
+        portfoliofinal <<- optimpf(finaldata)
+        equityinvestment <<- 1
+
+        portfolioplot <- cbind(ovr$Date,portfoliofinal)
+        names(portfolioplot) <- c("Date","Portfolio")
+        portfolioplot$Date <- strptime(as.character(portfolioplot$Date), "%d/%m/%Y")
+        portfolioplot$Date <- as.Date(format(portfolioplot$Date, "%Y-%m-%d"))
+        portfolioplot <- cbind(portfolioplot,benchmark)
+        
+        plotfinal <- ggplot()+
+          geom_line(data = portfolioplot, aes(
+            Date, Portfolio, group = 1, colour = "Your Portfolio"), size = 1) +
+          geom_line(data = portfolioplot, aes(
+            Date, benchmark, group = 1, colour = "MSCI World Benchmark"), size = 1) +
+          labs(x = "Year", y = "Portfoliodevelopement",
+               title = "Sharpe Ratio optimized 100% Equity Portfolio") +
+          scale_x_date(date_breaks = "2 years")+
+          scale_colour_manual("", values = c("Your Portfolio"="blue", 
+                                             "MSCI World Benchmark"="grey")) +
+          theme(legend.position=c(.9,.1))
+          theme_minimal()
+      }
+      plotfinal
+```
+
+
+```{r echo = FALSE, results='asis'}
+if (input$rpref2 == 1 && input$inv_horizon <= 5) {
+  cat("You have chosen a risk preference of level", input$rpref2, ", and an investment horizon of", input$inv_horizon, "years. According to these
+      specifications we have identified a pure bond investment as the most
+      suitable for you.")
+
+        
+      }
+
+##### long bond only ###########################################################
+
+      if ((input$rpref2 == 2 && input$inv_horizon <= 5) ||
+          (input$rpref2 == 1 && input$inv_horizon > 5 &&
+           input$inv_horizon <= 10)) {
+       cat("You have chosen a risk preference of level", input$rpref2, ", and an investment horizon of", input$inv_horizon, "years. According to these
+      specifications we have identified a pure bond investment as the most
+      suitable for you.")
+
+
+      }
+
+##### minimum variance PF ######################################################
+
+      if ((input$rpref2 == 3 && input$inv_horizon <= 5) ||
+         #redundant but included so that the number of conitions = number of PFs
+          (input$rpref2 == 3 && input$inv_horizon > 5 &&
+           input$inv_horizon <= 10) ||
+          (input$rpref2 == 2 && input$inv_horizon > 10)) {
+
+####### split the required input df into sub-df's to make them optimizable #####
+        cat("You have chosen a risk preference of level", input$rpref2, ", and an investment horizon of", input$inv_horizon, "years. According to these
+      specifications we have identified a minimum variacne investment as the most
+      suitable for you.")
+
+        }
+
+###### Equity + longbond overweight bond #######################################
+
+      if (input$rpref2 == 1 && input$inv_horizon > 10) {
+        cat("You have chosen a risk preference of level", input$rpref2, ", and an investment horizon of", input$inv_horizon, "years. According to these
+      specifications we have identified an equity and long bond investment as the most
+      suitable for you, where bond are overweighted.")
+
+        
+      }
+
+############################ risk parity #######################################
+      if ((input$rpref2 == 4 && input$inv_horizon <= 5) ||
+         (input$rpref2 == 5 && input$inv_horizon <= 5) ||
+         (input$rpref2 == 4 && input$inv_horizon > 5 && input$inv_horizon <= 10) ||
+         (input$rpref2 == 5 && input$inv_horizon > 5 && input$inv_horizon <= 10) ||
+         (input$rpref2 == 3 && input$inv_horizon > 10) ||
+         (input$rpref2 == 4 && input$inv_horizon > 10)) {
+        cat("You have chosen a risk preference of level", input$rpref2, ", and an investment horizon of", input$inv_horizon, "years. According to these
+      specifications we have identified a risk parity investment strategy as the most
+      suitable for you.")
+
+        
+
+      }
+
+########################### equity + longbond overweight equity ################
+      if ((input$rpref2 == 6 && input$inv_horizon <= 5) ||
+         (input$rpref2 == 6 && input$inv_horizon > 5 && input$inv_horizon <= 10) ||
+         (input$rpref2 == 5 && input$inv_horizon > 10)) {
+          cat("You have chosen a risk preference of level", input$rpref2, ", and an investment horizon of", input$inv_horizon, "years. According to these
+      specifications we have identified an equity and long bond investment as the most
+      suitable for you, where equity is overweighted.")
+
+        
+
+      }
+
+################################ Pure Equity? ##################################
+      if ((input$rpref2 == 6 && input$inv_horizon > 10) ||
+          (input$rpref2 == 7 && input$inv_horizon <= 5) ||
+          (input$rpref2 == 7 && input$inv_horizon > 5 && input$inv_horizon <= 10) ||
+          (input$rpref2 == 7 && input$inv_horizon > 10)) {
+        cat("You have chosen a risk preference of level", input$rpref2, ", and an investment horizon of", input$inv_horizon, "years. According to these
+      specifications we have identified a pure equity investment as the most
+      suitable for you.")
+
+        
+      }
+```
+
+**Performance Metrics**. Historically, the portfolio that has been construceted 
+for you has had an average return of `r paste0(round((averagereturn(portfoliofinal) * 100)), "%")` 
+and a yearly standard derviation of `r paste0(round((yearlystd(portfoliofinal) * 100)), "%")`. 
+This means that after `r input$inv_horizon` years, i.e. the investment horizon that you have
+specified, you can expect a terminal wealth of `r as.character(round(((1+(averagereturn(portfoliofinal)))^input$inv_horizon)*input$initial_wealth))`.
+Regarding downside risk, the portfolio has experienced a maximum drawdown of `r paste0(round((maxdrawdown(portfoliofinal) * 100)), "%")`, indicating the maximum
+loss that has historically occured. Finally, the portfolio has a sharpe ratio of
+`r round((averagereturn(portfoliofinal)/yearlystd(portfoliofinal)), 2)`, which shows
+the magnitude of the compensation for each unit of risk taken in terms of return
+in excess of the risk free rate.
+
+
+
+
+
+
+
+
+
