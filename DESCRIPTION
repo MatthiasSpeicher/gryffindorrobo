@@ -19,7 +19,8 @@ Description: With the Gryffindor Robo Advisor potential invetsors have the
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
-Imports:
+Depends:
+    R(>= 3.6.0),
     dashboardthemes(>= 1.0.5),
     devtools(>= 2.2.1),
     geojsonio(>= 0.8.0),
@@ -47,7 +48,6 @@ Imports:
 Suggests:
     githubinstall(>= 0.2.2),
     knitr(>= 1.26)
-Depends: R(>= 3.6.0)
 Remotes:
     nik01010/dashboardthemes
     MatthiasSpeicher/gryffindorrobo
