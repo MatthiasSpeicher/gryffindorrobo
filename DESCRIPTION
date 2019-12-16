@@ -20,7 +20,7 @@ License: GPL-2
 Encoding: UTF-8
 LazyData: true
 Imports:
-    dashboardthemes(>= 1.0.5),
+    dashboardthemes,
     devtools(>= 2.2.1),
     geojsonio(>= 0.8.0),
     ggplot2(>= 3.2.1),
