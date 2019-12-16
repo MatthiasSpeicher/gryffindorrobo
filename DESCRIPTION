@@ -52,6 +52,6 @@ Suggests:
     knitr(>= 1.26)
 Depends: R(>= 3.6.0)
 Remotes:
-    nik01010/dashboardthemes
+    nik01010/dashboardthemes,
     MatthiasSpeicher/gryffindorrobo
 RoxygenNote: 7.0.2
